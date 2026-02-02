@@ -7,6 +7,10 @@
  * - Osptek YDP154H008 (200×200)
  * - Custom user-defined panels
  *
+ * References:
+ * - ST7305 Datasheet: https://files.waveshare.com/wiki/common/ST_7305_V0_2.pdf
+ * - Waveshare product: https://www.waveshare.com/wiki/ESP32-S3-RLCD-4.2
+ *
  * @version 2.0.0
  */
 
@@ -20,63 +24,50 @@
 namespace esphome {
 namespace st7305_rlcd {
 
-// Panel model enumeration
+/// Panel model enumeration
 enum ST7305Model : uint8_t {
-  ST7305_MODEL_WAVESHARE_400X300 = 0,  // Landscape 2×4 blocks
-  ST7305_MODEL_OSPTEK_200X200,          // Square 4×2 blocks
-  ST7305_MODEL_CUSTOM,                  // User-defined
+  ST7305_MODEL_WAVESHARE_400X300 = 0,  ///< Landscape 2×4 blocks
+  ST7305_MODEL_OSPTEK_200X200,         ///< Square 4×2 blocks
+  ST7305_MODEL_CUSTOM,                 ///< User-defined
 };
 
-// Pixel block orientation (determines LUT calculation)
+/// Pixel block orientation (determines LUT calculation)
 enum ST7305Orientation : uint8_t {
-  ST7305_ORIENTATION_LANDSCAPE = 0,  // 2 cols × 4 rows per byte
-  ST7305_ORIENTATION_PORTRAIT,       // 4 cols × 2 rows per byte
+  ST7305_ORIENTATION_LANDSCAPE = 0,  ///< 2 cols × 4 rows per byte
+  ST7305_ORIENTATION_PORTRAIT,       ///< 4 cols × 2 rows per byte
 };
 
 class ST7305RLCD : public display::DisplayBuffer,
-                   public spi::SPIDevice<spi::BIT_ORDER_MSB_FIRST,
-                                         spi::CLOCK_POLARITY_LOW,
-                                         spi::CLOCK_PHASE_LEADING,
-                                         spi::DATA_RATE_10MHZ> {
+                   public spi::SPIDevice<spi::BIT_ORDER_MSB_FIRST, spi::CLOCK_POLARITY_LOW,
+                                         spi::CLOCK_PHASE_LEADING, spi::DATA_RATE_10MHZ> {
  public:
   void setup() override;
   void update() override;
   void dump_config() override;
   void fill(Color color) override;
 
-  // Configuration setters (called from Python)
+  // Configuration setters (called from Python codegen)
   void set_dc_pin(GPIOPin *pin) { this->dc_pin_ = pin; }
   void set_reset_pin(GPIOPin *pin) { this->reset_pin_ = pin; }
   void set_model(ST7305Model model) { this->model_ = model; }
-
-  // For custom panels
   void set_width(uint16_t width) { this->width_ = width; }
   void set_height(uint16_t height) { this->height_ = height; }
   void set_orientation(ST7305Orientation orientation) { this->orientation_ = orientation; }
 
-  // Power management - callable from lambda for battery optimization
-  // Display content is retained in all low-power states (reflective LCD)
-  //
-  // Power consumption (approximate):
-  //   High Power Mode: ~5mA (active refresh ~51Hz)
-  //   Low Power Mode:  ~1mA (slow refresh ~1Hz)
-  //   Sleep Mode:      ~10µA (controller off, image retained)
-  //
-  // Example usage in lambda:
-  //   id(my_display).sleep();           // Enter sleep after update
-  //   id(my_display).wake();            // Wake before next update
-  //   id(my_display).low_power_mode();  // For static content
-  //
-  void sleep();           // Enter sleep mode (lowest power, 120ms wake delay)
-  void wake();            // Exit sleep mode (includes 120ms delay)
-  void low_power_mode();  // Low power refresh (~1Hz) - for static content
-  void high_power_mode(); // High power refresh (~51Hz) - for animations
-  void display_on();      // Turn display on
-  void display_off();     // Turn display off (RAM retained)
+  /// Enter sleep mode (lowest power, display blanks, RAM retained)
+  void sleep();
+  /// Exit sleep mode (120ms delay required by controller)
+  void wake();
+  /// Switch to low power refresh (~1Hz) for static content
+  void low_power_mode();
+  /// Switch to high power refresh (~51Hz) for animations
+  void high_power_mode();
+  /// Turn display on (recover from display_off)
+  void display_on();
+  /// Turn display off (RAM retained, instant recovery)
+  void display_off();
 
-  display::DisplayType get_display_type() override {
-    return display::DisplayType::DISPLAY_TYPE_BINARY;
-  }
+  display::DisplayType get_display_type() override { return display::DisplayType::DISPLAY_TYPE_BINARY; }
 
  protected:
   void draw_absolute_pixel_internal(int x, int y, Color color) override;
@@ -84,22 +75,19 @@ class ST7305RLCD : public display::DisplayBuffer,
   int get_height_internal() override { return this->height_; }
   size_t get_buffer_length_() { return this->buffer_size_; }
 
- private:
   void apply_model_settings_();
   void hardware_reset_();
   void init_display_();
   void init_pixel_lut_();
-  void init_lut_landscape_();  // 2×4 blocks (Waveshare)
-  void init_lut_portrait_();   // 4×2 blocks (Osptek)
+  void init_lut_landscape_();
+  void init_lut_portrait_();
   void write_display_();
-
   void send_command_(uint8_t cmd);
   void send_data_(uint8_t data);
 
   GPIOPin *dc_pin_{nullptr};
   GPIOPin *reset_pin_{nullptr};
 
-  // Panel configuration
   ST7305Model model_{ST7305_MODEL_WAVESHARE_400X300};
   ST7305Orientation orientation_{ST7305_ORIENTATION_LANDSCAPE};
   uint16_t width_{400};

@@ -2,7 +2,8 @@
  * @file st7305_rlcd.cpp
  * @brief ESPHome driver for ST7305 reflective LCD displays
  *
- * Reference implementations:
+ * References:
+ * - ST7305 Datasheet: https://files.waveshare.com/wiki/common/ST_7305_V0_2.pdf
  * - Waveshare Arduino driver (display_bsp.cpp)
  * - Waveshare XiaoZhi driver (custom_lcd_display.cc)
  *
@@ -168,6 +169,8 @@ void ST7305RLCD::hardware_reset_() {
   if (this->reset_pin_ == nullptr)
     return;
 
+  // Hardware reset timing per ST7305 datasheet.
+  // These delays are acceptable as they only occur during setup().
   this->reset_pin_->digital_write(true);
   delay(50);
   this->reset_pin_->digital_write(false);
@@ -276,7 +279,7 @@ void ST7305RLCD::init_display_() {
     this->send_data_(static_cast<uint8_t>(this->height_ / 3));
   }
 
-  // Sleep Out - Exit sleep mode
+  // Sleep Out - Exit sleep mode (required delay per datasheet, acceptable during setup)
   this->send_command_(0x11);
   delay(200);
 
@@ -483,6 +486,9 @@ void ST7305RLCD::sleep() {
 
 void ST7305RLCD::wake() {
   this->send_command_(0x11);  // Sleep Out
+  // Per ST7305 datasheet: 120ms delay required after sleep out before sending commands.
+  // This is acceptable because wake() is only called explicitly by user from lambda,
+  // not from loop() or update().
   delay(120);
   ESP_LOGD(TAG, "Exited sleep mode");
 }
