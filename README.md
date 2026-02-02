@@ -4,6 +4,8 @@ ESPHome display driver component for ST7305-based reflective LCD displays. Porte
 
 **Note:** *This driver component is vibe coded.*
 
+![PXL_20260201_010637447 RAW-01 COVER-rs](https://github.com/user-attachments/assets/b4923a7d-15ca-4806-bb80-156f32c50c4d)
+
 ## Supported Panels
 
 | Model | Resolution | Size | Orientation\* | Compatible Panels |
@@ -233,3 +235,4 @@ display:
 ### Development Boards
 - [Waveshare ESP32-S3-RLCD-4.2](https://www.waveshare.com/wiki/ESP32-S3-RLCD-4.2)
 - [GooDisplay GDTL042T71 (400×300)](https://www.good-display.com/product/455.html)
+
