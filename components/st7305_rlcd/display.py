@@ -23,9 +23,8 @@ CONF_ORIENTATION = "orientation"
 st7305_rlcd_ns = cg.esphome_ns.namespace("st7305_rlcd")
 ST7305RLCD = st7305_rlcd_ns.class_(
     "ST7305RLCD",
-    cg.PollingComponent,
-    spi.SPIDevice,
     display.DisplayBuffer,
+    spi.SPIDevice,
 )
 
 # Model enumeration

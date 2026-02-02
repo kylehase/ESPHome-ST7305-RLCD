@@ -33,8 +33,7 @@ enum ST7305Orientation : uint8_t {
   ST7305_ORIENTATION_PORTRAIT,       // 4 cols × 2 rows per byte
 };
 
-class ST7305RLCD : public PollingComponent,
-                   public display::DisplayBuffer,
+class ST7305RLCD : public display::DisplayBuffer,
                    public spi::SPIDevice<spi::BIT_ORDER_MSB_FIRST,
                                          spi::CLOCK_POLARITY_LOW,
                                          spi::CLOCK_PHASE_LEADING,
