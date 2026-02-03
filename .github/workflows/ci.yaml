@@ -1,0 +1,17 @@
+name: ESPHome CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    # YAML syntax validation
+    
+  test-configs:
+    # Compile all test configurations
+    
+  build-firmware:
+    # Compile full firmware and upload artifact
