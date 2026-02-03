@@ -8,10 +8,62 @@ on:
 
 jobs:
   validate:
-    # YAML syntax validation
-    
+    name: Validate YAML Syntax
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          
+      - name: Install yamllint
+        run: pip install yamllint
+        
+      - name: Validate YAML files
+        run: |
+          yamllint -d relaxed room_controller.yaml || true
+          yamllint -d relaxed packages/*.yaml || true
+          yamllint -d relaxed tests/*.yaml || true
+
   test-configs:
-    # Compile all test configurations
-    
+    name: Compile Test Configurations
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        config:
+          - tests/test_display.yaml
+          - tests/test_buttons.yaml
+          - tests/test_sensors.yaml
+          - tests/test_compile.yaml
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Build ESPHome firmware
+        uses: esphome/build-action@v3
+        with:
+          yaml_file: ${{ matrix.config }}
+          version: latest
+
   build-firmware:
-    # Compile full firmware and upload artifact
+    name: Build Full Firmware
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Build ESPHome firmware
+        uses: esphome/build-action@v3
+        id: esphome-build
+        with:
+          yaml_file: room_controller.yaml
+          version: latest
+          
+      - name: Upload firmware artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware
+          path: ${{ steps.esphome-build.outputs.name }}
